@@ -1,0 +1,351 @@
+---
+import Base from '../layouts/Base.astro';
+---
+<Base title="HEIMDALL — Command With Confidence">
+
+  <style>
+    body { background: #0a0800; color: #e8a020; font-family: 'Courier New', Courier, monospace; }
+    @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0; } }
+    .blink { animation: blink 1s step-end infinite; }
+    .glow { text-shadow: 0 0 8px #ff8c0088, 0 0 22px #ff660044; }
+    body::after {
+      content: '';
+      position: fixed; inset: 0;
+      pointer-events: none; z-index: 998;
+      background: repeating-linear-gradient(
+        0deg, transparent, transparent 3px,
+        rgba(0,0,0,0.08) 3px, rgba(0,0,0,0.08) 4px
+      );
+    }
+    #terminal-body {
+      transition: opacity 0.25s ease, transform 0.25s ease;
+      min-height: 22rem;
+    }
+    #terminal-body.fade-out { opacity: 0; transform: translateY(-6px); }
+    #terminal-body.fade-in  { opacity: 0; transform: translateY(8px); }
+    #scenario-desc {
+      transition: opacity 0.25s ease, transform 0.25s ease;
+      min-height: 2.5rem;
+    }
+    #scenario-desc.fade-out { opacity: 0; transform: translateY(-4px); }
+    #scenario-desc.fade-in  { opacity: 0; transform: translateY(6px); }
+    #role-label { transition: opacity 0.2s ease; }
+    #role-label.fading { opacity: 0; }
+    .dot { transition: all 0.3s ease; cursor: pointer; width: 6px; }
+    .dot.active { background-color: #e8a020; width: 20px; }
+    .dot:not(.active) { background-color: rgba(232,160,32,0.45); }
+    .dot:not(.active):hover { background-color: rgba(232,160,32,0.7); }
+    @keyframes progress { from { width: 0% } to { width: 100% } }
+    #progress-bar { animation: progress 5s linear; }
+    #progress-bar.paused { animation-play-state: paused; }
+    .terminal-input {
+      background: transparent; border: none; outline: none;
+      color: #e8a020; font-family: 'Courier New', Courier, monospace;
+      font-size: 0.875rem; flex: 1; caret-color: #e8a020;
+    }
+    .terminal-input::placeholder { color: rgba(232,160,32,0.2); }
+    .agent-input {
+      background: transparent; border: none; outline: none;
+      color: #ffcc00; font-family: 'Courier New', Courier, monospace;
+      font-size: 0.875rem; flex: 1; caret-color: #ffcc00;
+    }
+    .agent-input::placeholder { color: rgba(255,204,0,0.2); }
+  </style>
+
+  <div class="min-h-screen">
+
+    <header class="border-b border-[#e8a020]/20 px-6 py-4">
+      <div class="max-w-5xl mx-auto flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <svg width="44" height="32" viewBox="0 0 44 32" fill="none">
+            <rect x="0.75" y="0.75" width="13" height="30.5" rx="1.5" stroke="#e8a020" stroke-width="1.5"/>
+            <line x1="0.75" y1="7" x2="13.75" y2="7" stroke="#e8a020" stroke-width="1" opacity="0.4"/>
+            <circle cx="3.5" cy="4" r="1" fill="#e8a020" opacity="0.5"/>
+            <text x="2" y="22" font-size="6" fill="#e8a020" font-family="monospace">&gt;_</text>
+            <line x1="13.75" y1="16" x2="30.25" y2="16" stroke="#e8a020" stroke-width="2.5" stroke-dasharray="2.5 2"/>
+            <polyline points="27,12.5 30.25,16 27,19.5" stroke="#e8a020" stroke-width="2.5" fill="none"/>
+            <rect x="30.25" y="0.75" width="13" height="30.5" rx="1.5" stroke="#e8a020" stroke-width="1.5"/>
+            <line x1="30.25" y1="7" x2="43.25" y2="7" stroke="#e8a020" stroke-width="1" opacity="0.4"/>
+            <circle cx="33.5" cy="4" r="1" fill="#e8a020" opacity="0.5"/>
+            <text x="33" y="22" font-size="6" fill="#e8a020" font-family="monospace">$</text>
+          </svg>
+          <span class="font-bold tracking-widest text-sm glow">HEIMDALL</span>
+        </div>
+        <a href="https://github.com/boblangley/heimdall" target="_blank" rel="noopener" class="text-[#e8a020]/40 hover:text-[#e8a020] transition-colors">
+          <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor" aria-label="GitHub">
+            <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
+          </svg>
+        </a>
+      </div>
+    </header>
+
+    <section class="py-20 px-6">
+      <div class="max-w-5xl mx-auto">
+        <p class="text-[#e8a020]/40 text-xs tracking-widest mb-6">// AI TERMINAL AGENT — PRIVATE BETA</p>
+        <h1 class="text-5xl font-bold tracking-tight leading-none mb-6 glow">Command with confidence.</h1>
+        <p class="text-[#e8a020]/80 text-lg leading-relaxed mb-3 max-w-2xl">
+          Other AI agents can't leave your local machine — they spawn processes via pipes, blind to SSH sessions, interactive prompts, and environments where nothing can be installed.
+        </p>
+        <p class="text-[#e8a020]/60 text-base leading-relaxed mb-12 max-w-xl">
+          Heimdall owns the PTY. It follows you anywhere — production servers, network devices, jump boxes — and helps without taking control.
+        </p>
+        <a href="https://github.com/boblangley/heimdall" target="_blank" rel="noopener"
+          class="inline-flex items-center gap-3 border border-[#e8a020] text-[#e8a020] hover:bg-[#e8a020] hover:text-[#0a0800] font-bold py-3 px-6 transition-colors text-sm tracking-widest">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+            <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
+          </svg>
+          [WATCH ON GITHUB]
+        </a>
+      </div>
+    </section>
+
+    <section class="px-6 pb-12" style="min-height:800px">
+      <div class="max-w-5xl mx-auto">
+
+        <div class="flex items-center justify-between mb-2">
+          <p id="role-label" class="text-[#e8a020]/50 text-xs tracking-widest"></p>
+          <p class="text-[#e8a020]/25 text-xs">hover to pause</p>
+        </div>
+        <p id="scenario-desc" class="text-[#e8a020]/50 text-sm leading-relaxed mb-4"></p>
+
+        <div id="terminal" class="border border-[#e8a020]/30 rounded w-full">
+          <div class="border-b border-[#e8a020]/20">
+            <div class="px-4 py-2.5 flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-[#e8a020]/40 inline-block"></span>
+              <span id="terminal-header" class="text-xs text-[#e8a020]/40 flex-1"></span>
+            </div>
+            <div class="h-px bg-[#e8a020]/10 relative overflow-hidden">
+              <div id="progress-bar" class="absolute left-0 top-0 h-full bg-[#e8a020]/40"></div>
+            </div>
+          </div>
+          <div id="terminal-body" class="p-5 text-sm leading-loose space-y-1 min-h-64"></div>
+          <div class="border-t border-[#e8a020]/15 px-5 py-2.5 flex items-center gap-2">
+            <span id="shell-prompt" class="text-[#e8a020]/50 text-sm shrink-0 whitespace-nowrap"></span>
+            <input class="terminal-input" placeholder="type a command..." autocomplete="off" spellcheck="false" />
+          </div>
+          <div class="border-t border-[#ffcc00]/10 px-5 py-2.5 flex items-center gap-2 bg-[#ffcc00]/3">
+            <span class="text-[#ffcc00]/50 text-sm shrink-0">&#11042; Heimdall:</span>
+            <input class="agent-input" placeholder="ask heimdall anything about this session..." autocomplete="off" spellcheck="false" />
+          </div>
+        </div>
+
+        <div class="flex items-center justify-center gap-2 mt-4">
+          <div class="dot h-1.5 rounded-full" data-index="0"></div>
+          <div class="dot h-1.5 rounded-full" data-index="1"></div>
+          <div class="dot h-1.5 rounded-full" data-index="2"></div>
+          <div class="dot h-1.5 rounded-full" data-index="3"></div>
+        </div>
+      </div>
+    </section>
+
+    <footer class="border-t border-[#e8a020]/10 py-8 text-center text-[#e8a020]/20 text-xs tracking-widest">
+      &copy; 2026 BOB LANGLEY
+    </footer>
+  </div>
+
+  <script>
+    const scenarios = [
+      {
+        role: "// scenario: network engineer on-call",
+        header: "core-sw-01.acme.net (Cisco IOS via SSH)",
+        prompt: "SW01#",
+        descBody: "SSH'd into a Cisco switch during a maintenance window. You can't run an agent on the device — but Heimdall is already watching your session from the local PTY. It catches the mis-configured interface before you move on.",
+        lines: [
+          { type: "cmd",   text: "SW01# show ip int brief" },
+          { type: "out",   text: "Interface           IP-Address    OK? Method Status                Protocol" },
+          { type: "out",   text: "GigabitEthernet0/0  10.0.1.1      YES NVRAM  up                    up" },
+          { type: "alert", text: "GigabitEthernet0/1  unassigned    YES unset  administratively down  down" },
+          { type: "out",   text: "GigabitEthernet0/2  10.0.2.1      YES NVRAM  up                    up" },
+        ],
+        suggestion: "G0/1 is administratively shut — that's manual, not a link failure. If this is unintentional, you'll want to enter the interface and bring it up. The config would be:",
+        command: "interface GigabitEthernet0/1\n  no shutdown",
+        suffix: "Before running that, worth checking: was this shutdown intentional for maintenance? I can pull the last config change timestamp if you want.",
+        action: "[Y] Draft full block",
+      },
+      {
+        role: "// scenario: sre on-call, 3am incident",
+        header: "prod-api-01.internal (Linux via SSH)",
+        prompt: "ops@prod-api-01:~$",
+        descBody: "You SSH into a server you haven't touched in months. Heimdall reads the service status alongside you, surfaces the next diagnostic command, and stays out of the way while you triage. You keep your hands on the wheel.",
+        lines: [
+          { type: "cmd",   text: "ops@prod-api-01:~$ systemctl status api-server" },
+          { type: "alert", text: "\u25CF api-server.service \u2014 FAILED" },
+          { type: "out",   text: "   Active: failed (Result: exit-code) since 03:14:22" },
+          { type: "out",   text: "   Main PID: 8821 (code=exited, status=1/FAILURE)" },
+          { type: "out",   text: "   Exit code: 1 — process terminated abnormally" },
+        ],
+        suggestion: "Service exited with code 1 at 03:14 — that's an application error, not OOM or signal. The most useful next step is the recent journal. I'd recommend:",
+        command: "journalctl -u api-server -n 100 --no-pager --since '03:10'",
+        suffix: "Going back to 03:10 gives you context before the crash. If you see a panic or missing config key, I can help trace it. Want me to run it?",
+        action: "[Y] Run",
+      },
+      {
+        role: "// scenario: cloud developer on a jump box",
+        header: "dev@bastion.us-east-1 (AWS jump box via SSH)",
+        prompt: "dev@bastion:~$",
+        descBody: "Your whole stack lives behind a bastion host. Heimdall follows you through the SSH tunnel, understands the Kubernetes context you're in, and helps you debug pods without needing any installation on the remote side.",
+        lines: [
+          { type: "cmd",   text: "dev@bastion:~$ kubectl get pods -n production" },
+          { type: "out",   text: "NAME                     READY   STATUS             RESTARTS   AGE" },
+          { type: "out",   text: "api-7d9fb8d6c-xk2p9      1/1     Running            0          2d" },
+          { type: "alert", text: "worker-6c8b9f5d4-m3nq1   0/1     CrashLoopBackOff   14         47m" },
+          { type: "out",   text: "cache-5f7dc4b9a-p8wrt     1/1     Running            0          2d" },
+        ],
+        suggestion: "14 restarts in 47 minutes — the backoff timer is probably near its max (5 min between attempts). Two likely causes: OOM kill or a bad env/config at startup. The previous container logs will tell us which:",
+        command: "kubectl logs worker-6c8b9f5d4-m3nq1 --previous -n production",
+        suffix: "If it's OOM you'll see 'Killed' at the end. If it's a config error you'll see a panic or missing key. I can check resource limits too if you want to compare.",
+        action: "[Y] Get logs",
+      },
+      {
+        role: "// scenario: junior engineer, shared dev server",
+        header: "dev@shared-dev-01 (Linux via SSH)",
+        prompt: "dev@shared-dev-01:~$",
+        descBody: "A push gets rejected and the git output is cryptic. Heimdall explains what happened, recommends the safe path, and flags the dangerous one — the force-push that would wipe teammates' work — before they make the mistake.",
+        lines: [
+          { type: "cmd",   text: "dev@shared-dev-01:~$ git push origin main" },
+          { type: "alert", text: "! [rejected] main -> main (non-fast-forward)" },
+          { type: "out",   text: "  error: failed to push some refs to 'origin'" },
+          { type: "out",   text: "  hint: Updates were rejected because the remote" },
+          { type: "out",   text: "  hint: contains work that you do not have locally." },
+        ],
+        suggestion: "Someone pushed to main after you last pulled. Your commits are fine — you just need to integrate their changes first. The safe way is a rebase:",
+        command: "git pull --rebase origin main",
+        suffix: "This replays your commits on top of theirs. If there are conflicts git will pause and let you resolve them one by one.\n\nDo NOT use --force — that would overwrite your teammates' commits on the remote. I'll remind you if I see that typed.",
+        action: "[Y] Run rebase",
+      },
+    ];
+
+    let current = 0;
+    let paused = false;
+    let intervalId: ReturnType<typeof setInterval> | null = null;
+    let resumeTimeout: ReturnType<typeof setTimeout> | null = null;
+
+    const body         = document.getElementById('terminal-body') as HTMLElement;
+    const header       = document.getElementById('terminal-header') as HTMLElement;
+    const roleEl       = document.getElementById('role-label') as HTMLElement;
+    const shellPrompt  = document.getElementById('shell-prompt') as HTMLElement;
+    const scenarioDesc = document.getElementById('scenario-desc') as HTMLElement;
+    const dots         = document.querySelectorAll<HTMLElement>('.dot');
+    const progressBar  = document.getElementById('progress-bar') as HTMLElement;
+    const terminal     = document.getElementById('terminal') as HTMLElement;
+
+    function resetProgressBar() {
+      progressBar.style.animation = 'none';
+      progressBar.offsetHeight;
+      progressBar.style.animation = paused ? 'none' : 'progress 5s linear';
+    }
+
+    function render(index: number) {
+      const s = scenarios[index];
+
+      body.classList.add('fade-out');
+      scenarioDesc.classList.add('fade-out');
+      roleEl.classList.add('fading');
+
+      setTimeout(() => {
+        header.textContent = s.header;
+        roleEl.textContent = s.role;
+        shellPrompt.textContent = s.prompt;
+        scenarioDesc.textContent = s.descBody;
+
+        dots.forEach((d, i) => d.classList.toggle('active', i === index));
+
+        let html = '';
+        for (const line of s.lines) {
+          if (line.type === 'cmd') {
+            html += `<p style="color:#e8a020">${line.text}</p>`;
+          } else if (line.type === 'alert') {
+            html += `<p style="color:#ffcc00">${line.text}</p>`;
+          } else {
+            html += `<p style="color:rgba(232,160,32,0.5)">${line.text}</p>`;
+          }
+        }
+
+        const cmdLines = s.command.split('\n');
+        const cmdHtml = cmdLines.map((l, i) =>
+          i === 0
+            ? `<span style="color:#ffcc00">${l}</span>`
+            : `<span style="color:rgba(255,204,0,0.7);display:block;padding-left:1em">${l}</span>`
+        ).join('');
+
+        const suffixHtml = s.suffix
+          ? s.suffix.split('\n').map(l => `<span>${l}</span>`).join('<br>')
+          : '';
+
+        html += `
+          <div style="border:1px solid rgba(232,160,32,0.3);background:rgba(232,160,32,0.04);border-radius:4px;padding:12px 14px;margin:10px 0">
+            <p style="color:#ffcc00;font-size:0.7rem;letter-spacing:0.1em;margin-bottom:8px;opacity:0.8">&#11042; HEIMDALL</p>
+            <p style="font-size:0.82rem;line-height:1.7;color:rgba(232,160,32,0.75)">${s.suggestion}</p>
+            <pre style="background:rgba(0,0,0,0.3);border:1px solid rgba(255,204,0,0.15);border-radius:3px;padding:8px 10px;margin:8px 0;font-size:0.8rem;font-family:inherit;white-space:pre-wrap">${cmdHtml}</pre>
+            ${suffixHtml ? `<p style="font-size:0.8rem;line-height:1.7;color:rgba(232,160,32,0.5);margin-top:6px">${suffixHtml}</p>` : ''}
+            <div style="display:flex;gap:16px;margin-top:10px;font-size:0.75rem">
+              <span style="color:#e8a020;border:1px solid rgba(232,160,32,0.4);padding:2px 10px;cursor:pointer">${s.action}</span>
+              <span style="color:rgba(232,160,32,0.35);cursor:pointer">[N] Skip</span>
+            </div>
+          </div>
+        `;
+        body.innerHTML = html;
+
+        body.classList.remove('fade-out');
+        body.classList.add('fade-in');
+        scenarioDesc.classList.remove('fade-out');
+        scenarioDesc.classList.add('fade-in');
+        roleEl.classList.remove('fading');
+
+        body.offsetHeight;
+        body.classList.remove('fade-in');
+        scenarioDesc.classList.remove('fade-in');
+
+        resetProgressBar();
+      }, 280);
+    }
+
+    function advance() {
+      current = (current + 1) % scenarios.length;
+      render(current);
+    }
+
+    function startCycle() {
+      if (intervalId) clearInterval(intervalId);
+      intervalId = setInterval(advance, 5000);
+    }
+
+    function stopCycle() {
+      if (intervalId) { clearInterval(intervalId); intervalId = null; }
+    }
+
+    dots.forEach((dot) => {
+      dot.addEventListener('click', () => {
+        const idx = parseInt(dot.dataset.index ?? '0');
+        if (idx === current) return;
+        current = idx;
+        paused = true;
+        progressBar.classList.add('paused');
+        stopCycle();
+        render(current);
+        if (resumeTimeout) clearTimeout(resumeTimeout);
+        resumeTimeout = setTimeout(() => {
+          paused = false;
+          progressBar.classList.remove('paused');
+          startCycle();
+          resetProgressBar();
+        }, 10000);
+      });
+    });
+
+    terminal.addEventListener('mouseenter', () => {
+      paused = true;
+      progressBar.classList.add('paused');
+      stopCycle();
+    });
+    terminal.addEventListener('mouseleave', () => {
+      paused = false;
+      progressBar.classList.remove('paused');
+      startCycle();
+      resetProgressBar();
+    });
+
+    render(0);
+    startCycle();
+  </script>
+</Base>

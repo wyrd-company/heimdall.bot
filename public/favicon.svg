@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 44 44" fill="none">
+  <rect width="44" height="44" fill="#0a0800"/>
+  <!-- Local terminal (left stroke of H) -->
+  <rect x="0.75" y="6.75" width="13" height="30.5" rx="1.5" stroke="#e8a020" stroke-width="1.5"/>
+  <line x1="0.75" y1="13" x2="13.75" y2="13" stroke="#e8a020" stroke-width="1" opacity="0.4"/>
+  <circle cx="3.5" cy="10" r="1" fill="#e8a020" opacity="0.5"/>
+  <text x="2" y="28" font-size="6" fill="#e8a020" font-family="monospace">&gt;_</text>
+  <!-- SSH pipe (crossbar of H) -->
+  <line x1="13.75" y1="22" x2="30.25" y2="22" stroke="#e8a020" stroke-width="2.5" stroke-dasharray="2.5 2"/>
+  <polyline points="27,18.5 30.25,22 27,25.5" stroke="#e8a020" stroke-width="2.5" fill="none"/>
+  <!-- Remote terminal (right stroke of H) -->
+  <rect x="30.25" y="6.75" width="13" height="30.5" rx="1.5" stroke="#e8a020" stroke-width="1.5"/>
+  <line x1="30.25" y1="13" x2="43.25" y2="13" stroke="#e8a020" stroke-width="1" opacity="0.4"/>
+  <circle cx="33.5" cy="10" r="1" fill="#e8a020" opacity="0.5"/>
+  <text x="33" y="28" font-size="6" fill="#e8a020" font-family="monospace">$</text>
+</svg>
